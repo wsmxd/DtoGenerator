@@ -2,6 +2,39 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+
+	  <!-- 1. 包的唯一标识 ID -->
+	  <PackageId>Mxd.DtoGenerator</PackageId>
+	  <!-- 2. 版本号 (每次发布都要改) -->
+	  <Version>1.0.0</Version>
+
+	  <!-- 3. 作者和描述 -->
+	  <Authors>wsmxd</Authors>
+	  <Description>Source generator for creating DTOs.</Description>
+
+	  <!-- 4. 仓库地址 (这就回链接到你的 GitHub) -->
+	  <RepositoryUrl>https://github.com/wsmxd/DtoGenerator</RepositoryUrl>
+	  <RepositoryType>git</RepositoryType>
+
+	  <!-- 5. 协议和 Readme -->
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\DtoGenerator.Source\bin\Release\netstandard2.0\DtoGenerator.Source.dll"
+			  Pack="true"
+			  PackagePath="analyzers/dotnet/cs"
+			  Visible="false" />
+	</ItemGroup>
+
+	<!-- 确保打包前编译 Generator -->
+	<Target Name="BuildGenerator" BeforeTargets="Build">
+		<Exec Command="dotnet build ..\DtoGenerator.Source\DtoGenerator.Source.csproj -c Release" />
+	</Target>
 
 </Project>

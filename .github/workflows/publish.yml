@@ -1,0 +1,33 @@
+name: Publish to NuGet
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # 1. 这里必须安装 .NET 8 (或者 6/7/9)，不要写 Standard 2.0
+    # 因为我们需要新版的编译器来处理你的 Source Generator 代码
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    # 2. 编译 Generator 项目
+    # 注意路径：根据你的截图，文件夹直接在根目录
+    - name: Build Generator
+      run: dotnet build DtoGenerator.Source/DtoGenerator.Source.csproj -c Release
+
+    # 3. 打包 Attribute 项目
+    # 注意：这个项目引用了上面的 Generator DLL，所以必须先编译上面那个
+    - name: Pack Attributes Library
+      run: dotnet pack DtoGenerator/DtoGenerator.csproj -c Release -o out
+
+    # 4. 推送到 NuGet
+    - name: Push to NuGet
+      run: dotnet nuget push ./out/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

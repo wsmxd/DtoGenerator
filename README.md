@@ -1,3 +1,5 @@
+**[中文文档](README_CN.md)**
+
 # Roslyn DTO Generator
 
 A high-performance, compile-time **Source Generator** for .NET that automatically creates DTO classes and mapping methods based on your entity definitions.
@@ -64,15 +66,15 @@ Map `UserEntity.UserEmail` to `UserDto.Email`.
 [DtoName("Email")]
 public string UserEmail { get; set; }
 ```
-## 2. Virtual / Calculated Properties
+### 2. Virtual / Calculated Properties
 Combine fields into a new property in the DTO. Use entity to refer to the source object.
 ``` csharp
 [DtoVirtualProperty("FullName", typeof(string), "entity.FirstName + \" \" + entity.LastName")]
 public class User { ... }
 ```
-## 3. Custom Logic & Hooks
+### 3. Custom Logic & Hooks
 You can hook into the mapping process to handle complex scenarios (e.g., splitting a string back into two fields during `ToEntity`).
-### Option A: Optional Partial Methods (Default)
+#### Option A: Optional Partial Methods (Default)
 Simply create a partial class file for your DTO.
 ``` csharp
 // UserDto.Custom.cs
@@ -85,7 +87,7 @@ public partial class UserDto
     }
 }
 ```
-### Option B: Enforced Interface (Strict Mode)
+#### Option B: Enforced Interface (Strict Mode)
 Force the implementation of hooks using `EnforceHooks = true`.
 ``` csharp
 [GenerateDto(EnforceHooks = true)]

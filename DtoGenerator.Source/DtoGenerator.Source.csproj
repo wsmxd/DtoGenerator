@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<!-- 启用最新的 C# 语言特性 -->
+		<LangVersion>latest</LangVersion>
+		<!-- 标记这是一个 Roslyn 组件 -->
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<!-- 强制使用新的分析器规则 -->
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- 关键点：版本必须 >= 4.0.0 才有 IIncrementalGenerator -->
+		<!-- 推荐使用 4.3.0 或更高版本以获得更好的稳定性 -->
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
+	</ItemGroup>
+
+</Project>

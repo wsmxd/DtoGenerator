@@ -1,5 +1,9 @@
 <Solution>
-  <Project Path="DtoGenerator.Source/DtoGenerator.Source.csproj" />
-  <Project Path="DtoGenerator/DtoGenerator.csproj" />
-  <Project Path="TestGenerator/TestGenerator.csproj" />
+  <Folder Name="/src/">
+    <Project Path="DtoGenerator.Source/DtoGenerator.Source.csproj" />
+    <Project Path="DtoGenerator/DtoGenerator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="TestGenerator/TestGenerator.csproj" />
+  </Folder>
 </Solution>

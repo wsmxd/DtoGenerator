@@ -22,11 +22,11 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<None Include="..\README.md" Pack="true" PackagePath="\" />
+		<None Include="../README.md" Pack="true" PackagePath="/" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\DtoGenerator.Source\bin\Release\netstandard2.0\DtoGenerator.Source.dll"
+		<None Include="../DtoGenerator.Source/bin/Release/netstandard2.0/DtoGenerator.Source.dll"
 			  Pack="true"
 			  PackagePath="analyzers/dotnet/cs"
 			  Visible="false" />
@@ -34,7 +34,7 @@
 
 	<!-- 确保打包前编译 Generator -->
 	<Target Name="BuildGenerator" BeforeTargets="Build">
-		<Exec Command="dotnet build ..\DtoGenerator.Source\DtoGenerator.Source.csproj -c Release" />
+		<Exec Command="dotnet build ../DtoGenerator.Source/DtoGenerator.Source.csproj -c Release" />
 	</Target>
 
 </Project>

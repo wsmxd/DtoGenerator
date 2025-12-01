@@ -6,7 +6,7 @@
 	  <!-- 1. 包的唯一标识 ID -->
 	  <PackageId>Mxd.DtoGenerator</PackageId>
 	  <!-- 2. 版本号 (每次发布都要改) -->
-	  <Version>1.0.0</Version>
+	  <Version>1.0.1</Version>
 
 	  <!-- 3. 作者和描述 -->
 	  <Authors>wsmxd</Authors>

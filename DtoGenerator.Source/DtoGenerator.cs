@@ -47,6 +47,18 @@ public class DtoGenerator : IIncrementalGenerator
         var targetClassName = sourceSymbol.Name + suffix;
         var targetNamespace = sourceSymbol.ContainingNamespace.ToDisplayString();
 
+        // 获取参数: UseSourceAccessModifier
+        var useSourceAccessModifierArg = attr.NamedArguments
+            .FirstOrDefault(kv => kv.Key == "UseSourceAccessModifier").Value.Value;
+        var useSourceAccessModifier = useSourceAccessModifierArg is bool c && c;
+        string targetAccessModifier;
+        if (useSourceAccessModifier)
+            targetAccessModifier = sourceSymbol.DeclaredAccessibility.ToString().ToLower();
+        else
+        {
+            targetAccessModifier = "public";
+        }
+
         var properties = new List<DtoPropertyInfo>();
 
         // 1. 获取普通属性 (来自 Entity 成员)
@@ -105,6 +117,7 @@ public class DtoGenerator : IIncrementalGenerator
         return new DtoClassInfo(
             SourceNamespace: targetNamespace,
             SourceClassName: sourceSymbol.Name,
+            TargetClassAccessModifier: targetAccessModifier,
             TargetClassName: targetClassName,
             GenerateMapper: generateMapper,
             EnforceHooks: enforceHooks,
@@ -150,7 +163,7 @@ public class DtoGenerator : IIncrementalGenerator
 
             namespace {{info.SourceNamespace}}
             {
-                public partial class {{info.TargetClassName}}{{interfaceDeclaration}}
+                {{info.TargetClassAccessModifier}} partial class {{info.TargetClassName}}{{interfaceDeclaration}}
                 {
             {{propBuilder}}
 
@@ -233,6 +246,7 @@ public class DtoGenerator : IIncrementalGenerator
     private record DtoClassInfo(
         string SourceNamespace,
         string SourceClassName,
+        string TargetClassAccessModifier,
         string TargetClassName,
         bool GenerateMapper,
         bool EnforceHooks,

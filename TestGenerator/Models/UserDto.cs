@@ -4,7 +4,7 @@ using System.Text;
 
 namespace TestGenerator.Models;
 
-public partial class UserDto
+internal partial class UserDto
 {
     // 钩子 1: Entity -> Dto 转换后触发
     public void OnDtoCreated(User sourceEntity)

@@ -21,6 +21,12 @@ namespace DtoGenerator
         /// </summary>
         public bool EnforceHooks { get; set; } = false;
 
+        /// <summary>
+        /// 是否使用源类的访问修饰符来生成 DTO 类。
+        /// 默认为false，即生成的 DTO 类为 public。
+        /// </summary>
+        public bool UseSourceAccessModifier { get; set; } = false;
+
         public GenerateDtoAttribute(string suffix = "Dto")
         {
             Suffix = suffix;

@@ -5,9 +5,9 @@ using System.Text;
 
 namespace TestGenerator.Models
 {
-    [GenerateDto(EnforceHooks =true)]
+    [GenerateDto(EnforceHooks = true, UseSourceAccessModifier = true)]
     [DtoVirtualProperty("FullName", typeof(string), "entity.FirstName + \" \" + entity.LastName")]
-    public class User
+    internal class User
     {
         public int Id { get; set; }
         public required string FirstName { get; set; }

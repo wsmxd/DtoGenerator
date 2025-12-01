@@ -1,5 +1,6 @@
 **[中文文档](README_CN.md)**
-
+[![NuGet](https://img.shields.io/nuget/v/My.DtoGenerator.svg)](https://www.nuget.org/packages/Mxd.DtoGenerator)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/My.DtoGenerator.svg)](https://www.nuget.org/packages/Mxd.DtoGenerator)
 # Roslyn DTO Generator
 
 A high-performance, compile-time **Source Generator** for .NET that automatically creates DTO classes and mapping methods based on your entity definitions.

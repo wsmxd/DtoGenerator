@@ -59,20 +59,31 @@ public class DtoGenerator : IIncrementalGenerator
             targetAccessModifier = "public";
         }
 
+        var includeBasePropertiesArg = attr.NamedArguments
+            .FirstOrDefault(kv => kv.Key == "IncludeBaseProperties").Value.Value;
+
+        var includeBaseProperties = includeBasePropertiesArg is bool bb && bb;
+
         var properties = new List<DtoPropertyInfo>();
 
+        IEnumerable<IPropertySymbol> props = includeBaseProperties
+            ? sourceSymbol.GetAllPropertiesOptimized()
+            : sourceSymbol.GetMembers().OfType<IPropertySymbol>();
         // 1. 获取普通属性 (来自 Entity 成员)
-        foreach (var prop in sourceSymbol.GetMembers().OfType<IPropertySymbol>())
+        foreach (var prop in props)
         {
             if (prop.DeclaredAccessibility != Accessibility.Public || prop.IsStatic) continue;
             if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "DtoIgnoreAttribute")) continue;
 
+            // 防止 override 重复
+            if (prop.IsOverride && !SymbolEqualityComparer.Default.Equals(prop.ContainingType, sourceSymbol))
+                continue;
+
+            // 处理名称映射
             string targetName = prop.Name;
             var nameAttr = prop.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "DtoNameAttribute");
-            if (nameAttr != null && nameAttr.ConstructorArguments.Length > 0)
-            {
+            if (nameAttr != null)
                 targetName = nameAttr.ConstructorArguments[0].Value?.ToString() ?? prop.Name;
-            }
 
             properties.Add(new DtoPropertyInfo(
                 OriginalName: prop.Name,
@@ -118,6 +129,7 @@ public class DtoGenerator : IIncrementalGenerator
             SourceNamespace: targetNamespace,
             SourceClassName: sourceSymbol.Name,
             TargetClassAccessModifier: targetAccessModifier,
+            IncludeBaseProperties: includeBaseProperties,
             TargetClassName: targetClassName,
             GenerateMapper: generateMapper,
             EnforceHooks: enforceHooks,
@@ -247,6 +259,7 @@ public class DtoGenerator : IIncrementalGenerator
         string SourceNamespace,
         string SourceClassName,
         string TargetClassAccessModifier,
+        bool IncludeBaseProperties,
         string TargetClassName,
         bool GenerateMapper,
         bool EnforceHooks,

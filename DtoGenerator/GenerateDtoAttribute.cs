@@ -27,6 +27,11 @@ namespace DtoGenerator
         /// </summary>
         public bool UseSourceAccessModifier { get; set; } = false;
 
+        /// <summary>
+        /// 是否包含基类的公共属性（默认 false）
+        /// </summary>
+        public bool IncludeBaseProperties { get; set; } = false;
+
         public GenerateDtoAttribute(string suffix = "Dto")
         {
             Suffix = suffix;

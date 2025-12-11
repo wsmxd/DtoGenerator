@@ -61,19 +61,36 @@ Console.WriteLine(dto.Username); // "admin"
 var newUser = dto.ToEntity();
 ```
 ## 📚 Advanced Usage
-### 1. Renaming Properties
+### 1. Inheriting Base Class Properties
+By default, only properties declared in the current class are included.
+
+To **include all public properties from the entire inheritance chain**, use:
+``` csharp
+[GenerateDto(IncludeBaseProperties = true)]
+public class AdminUser : User
+{
+    public string Role { get; set; }
+}
+```
+This will generate a `AdminUserDto` containing:
+
+- `Id`, `Username` (from base `User`)
+- `Role` (from `AdminUser`)
+
+> 🔹 Note: Only `public instance properties` from base classes are included. Private, protected, or static members are ignored.
+### 2. Renaming Properties
 Map `UserEntity.UserEmail` to `UserDto.Email`.
 ``` csharp
 [DtoName("Email")]
 public string UserEmail { get; set; }
 ```
-### 2. Virtual / Calculated Properties
+### 3. Virtual / Calculated Properties
 Combine fields into a new property in the DTO. Use entity to refer to the source object.
 ``` csharp
 [DtoVirtualProperty("FullName", typeof(string), "entity.FirstName + \" \" + entity.LastName")]
 public class User { ... }
 ```
-### 3. Custom Logic & Hooks
+### 4. Custom Logic & Hooks
 You can hook into the mapping process to handle complex scenarios (e.g., splitting a string back into two fields during `ToEntity`).
 #### Option A: Optional Partial Methods (Default)
 Simply create a partial class file for your DTO.

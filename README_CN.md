@@ -59,19 +59,36 @@ var newUser = dto.ToEntity();
 ```
 
 ## 📚 高级用法
-### 1. 属性重命名
+### 1. 继承基类属性  
+默认情况下，仅包含当前类中声明的属性。
+
+要**包含整个继承链中的所有公共属性**，请使用：
+```csharp
+[GenerateDto(IncludeBaseProperties = true)]
+public class AdminUser : User
+{
+    public string Role { get; set; }
+}
+```
+这将生成一个 `AdminUserDto`，其中包含：
+
+- `Id`、`Username`（来自基类 `User`）
+- `Role`（来自 `AdminUser`）
+
+> 🔹 注意：仅包含基类中的**公共实例属性**。私有、受保护或静态成员将被忽略。
+### 2. 属性重命名
 将实体的 `UserEmail` 映射为 DTO 的 `Email`。
 ```csharp
 [DtoName("Email")]
 public string UserEmail { get; set; }
 ```
-### 2. 虚拟属性（聚合字段）
+### 3. 虚拟属性（聚合字段）
 在 DTO 中增加一个实体里不存在的字段，并定义计算逻辑。在表达式中使用 entity 代表源对象。
 ```csharp
 [DtoVirtualProperty("FullName", typeof(string), "entity.FirstName + \" \" + entity.LastName")]
 public class User { ... }
 ```
-### 3. 自定义逻辑与钩子 (Hooks)
+### 4. 自定义逻辑与钩子 (Hooks)
 有时你需要手动处理反向映射（例如把 FullName 拆回两个字段），或者在映射前后记录日志。
 #### 方式 A: 可选分部方法 (默认)
 只需创建一个 UserDto 的分部类文件即可：

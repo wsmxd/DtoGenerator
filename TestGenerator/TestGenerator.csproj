@@ -11,5 +11,5 @@
     <ProjectReference Include="..\DtoGenerator.Source\DtoGenerator.Source.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\DtoGenerator\DtoGenerator.csproj" />
   </ItemGroup>
-
+  
 </Project>

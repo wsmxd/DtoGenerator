@@ -1,5 +1,5 @@
 ﻿using System;
-
+#nullable enable
 namespace DtoGenerator
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
@@ -7,7 +7,8 @@ namespace DtoGenerator
     {
         public string Name { get; }
         public Type Type { get; }
-        public string ValueExpression { get; }
+        public string? ValueExpression { get; }
+        public string? ExpressionMemberName { get; set; }
 
         /// <summary>
         /// 定义一个 DTO 虚拟属性
@@ -18,7 +19,7 @@ namespace DtoGenerator
         /// 赋值表达式。可以使用 'entity' 变量访问原对象。
         /// 例如: "entity.FirstName + \" \" + entity.LastName"
         /// </param>
-        public DtoVirtualPropertyAttribute(string name, Type type, string valueExpression)
+        public DtoVirtualPropertyAttribute(string name, Type type, string? valueExpression = null)
         {
             Name = name;
             Type = type;

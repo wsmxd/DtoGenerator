@@ -87,6 +87,16 @@ public string UserEmail { get; set; }
 ```csharp
 [DtoVirtualProperty("FullName", typeof(string), "entity.FirstName + \" \" + entity.LastName")]
 public class User { ... }
+
+// 或者可以这样写：
+[DtoVirtualProperty("FullName", typeof(string), ExpressionMemberName=nameof(FullNameExpression))]
+public class User
+{
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+
+    public static Expression<Func<User, string>> FullNameExpression => a => $"{a.FirstName} {a.LastName}";
+}
 ```
 ### 4. 自定义逻辑与钩子 (Hooks)
 有时你需要手动处理反向映射（例如把 FullName 拆回两个字段），或者在映射前后记录日志。

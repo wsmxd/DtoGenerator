@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
@@ -104,25 +106,34 @@ public class DtoGenerator : IIncrementalGenerator
         {
             var args = vAttr.ConstructorArguments;
             // 构造函数参数顺序：[0]Name, [1]Type, [2]Expression
-            if (args.Length == 3)
-            {
-                var name = args[0].Value?.ToString() ?? "Unknown";
-                // args[1] 是 typeof(T)，在 Roslyn 中是 ITypeSymbol
-                var typeSymbol = args[1].Value as ITypeSymbol;
-                var expression = args[2].Value?.ToString() ?? "default";
+            var name = args.Length > 0 ? args[0].Value?.ToString() ?? "Unknown" : "Unknown";
+            var typeSymbol = args.Length > 1 ? args[1].Value as ITypeSymbol : null;
+            if (typeSymbol == null) continue;
 
-                if (typeSymbol != null)
+            string? expression = args.Length > 2 ? args[2].Value?.ToString() : null;
+            var memberName = vAttr.NamedArguments
+                .FirstOrDefault(kv => kv.Key == "ExpressionMemberName")
+                .Value.Value?.ToString();
+
+            if (!string.IsNullOrWhiteSpace(memberName) && context.SemanticModel is { } semanticModel)
+            {
+                var resolved = TryResolveExpressionFromMember(sourceSymbol, memberName, semanticModel, CancellationToken.None);
+                if (!string.IsNullOrWhiteSpace(resolved))
                 {
-                    properties.Add(new DtoPropertyInfo(
-                        OriginalName: null,
-                        TargetName: name,
-                        TypeFullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        IsRequired: false,
-                        IsVirtual: true,
-                        ValueExpression: expression
-                    ));
+                    expression = resolved;
                 }
             }
+
+            if (string.IsNullOrWhiteSpace(expression)) continue;
+
+            properties.Add(new DtoPropertyInfo(
+                OriginalName: null,
+                TargetName: name,
+                TypeFullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                IsRequired: false,
+                IsVirtual: true,
+                ValueExpression: expression
+            ));
         }
 
         return new DtoClassInfo(
@@ -225,7 +236,7 @@ public class DtoGenerator : IIncrementalGenerator
             else
                 sb.AppendLine($"                {p.TargetName} = entity.{p.OriginalName},");
         }
-        sb.AppendLine("            };");
+        sb.AppendLine("            };" );
 
         // 调用钩子
         sb.AppendLine("            dto.OnDtoCreated(entity);");
@@ -244,7 +255,7 @@ public class DtoGenerator : IIncrementalGenerator
             if (p.IsVirtual) continue;
             sb.AppendLine($"                {p.OriginalName} = this.{p.TargetName},");
         }
-        sb.AppendLine("            };");
+        sb.AppendLine("            };" );
 
         // 调用钩子
         sb.AppendLine("            this.OnEntityCreated(entity);");
@@ -253,6 +264,81 @@ public class DtoGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
 
         return sb.ToString();
+    }
+
+    private static string? TryResolveExpressionFromMember(INamedTypeSymbol sourceSymbol, string memberName, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
+        var member = sourceSymbol.GetMembers(memberName).FirstOrDefault();
+        if (member is null) return null;
+
+        foreach (var syntaxRef in member.DeclaringSyntaxReferences)
+        {
+            var syntax = syntaxRef.GetSyntax(cancellationToken);
+            var lambda = ExtractLambdaExpression(syntax);
+            if (lambda is null) continue;
+
+            var parameterSymbol = GetLambdaParameterSymbol(lambda, semanticModel, cancellationToken);
+            var body = lambda.Body;
+            if (parameterSymbol is not null)
+            {
+                var rewriter = new ParameterRenamer(semanticModel, parameterSymbol, "entity");
+                var rewritten = rewriter.Visit(body);
+                if (rewritten is ExpressionSyntax expression)
+                    return expression.ToString();
+            }
+
+            return body.ToString();
+        }
+
+        return null;
+    }
+
+    private static LambdaExpressionSyntax? ExtractLambdaExpression(SyntaxNode syntax)
+    {
+        return syntax switch
+        {
+            PropertyDeclarationSyntax prop => prop.ExpressionBody?.Expression as LambdaExpressionSyntax,
+            MethodDeclarationSyntax method => method.ExpressionBody?.Expression as LambdaExpressionSyntax
+                ?? method.Body?.Statements.OfType<ReturnStatementSyntax>().FirstOrDefault()?.Expression as LambdaExpressionSyntax,
+            _ => null
+        };
+    }
+
+    private static ISymbol? GetLambdaParameterSymbol(LambdaExpressionSyntax lambda, SemanticModel semanticModel, CancellationToken cancellationToken)
+    {
+        return lambda switch
+        {
+            SimpleLambdaExpressionSyntax simple => semanticModel.GetDeclaredSymbol(simple.Parameter, cancellationToken),
+            ParenthesizedLambdaExpressionSyntax parent => parent.ParameterList.Parameters.FirstOrDefault() is ParameterSyntax parameter
+                ? semanticModel.GetDeclaredSymbol(parameter, cancellationToken)
+                : null,
+            _ => null
+        };
+    }
+
+    private sealed class ParameterRenamer : CSharpSyntaxRewriter
+    {
+        private readonly SemanticModel _semanticModel;
+        private readonly ISymbol _parameterSymbol;
+        private readonly string _replacement;
+
+        public ParameterRenamer(SemanticModel semanticModel, ISymbol parameterSymbol, string replacement)
+        {
+            _semanticModel = semanticModel;
+            _parameterSymbol = parameterSymbol;
+            _replacement = replacement;
+        }
+
+        public override SyntaxNode? VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+            if (SymbolEqualityComparer.Default.Equals(symbol, _parameterSymbol))
+            {
+                return SyntaxFactory.IdentifierName(_replacement).WithTriviaFrom(node);
+            }
+
+            return base.VisitIdentifierName(node);
+        }
     }
 
     private record DtoClassInfo(

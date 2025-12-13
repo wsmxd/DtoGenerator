@@ -89,6 +89,16 @@ Combine fields into a new property in the DTO. Use entity to refer to the source
 ``` csharp
 [DtoVirtualProperty("FullName", typeof(string), "entity.FirstName + \" \" + entity.LastName")]
 public class User { ... }
+
+// Or it can be written like this:
+[DtoVirtualProperty("FullName", typeof(string), ExpressionMemberName=nameof(FullNameExpression))]
+public class User
+{
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+
+    public static Expression<Func<User, string>> FullNameExpression => a => $"{a.FirstName} {a.LastName}";
+}
 ```
 ### 4. Custom Logic & Hooks
 You can hook into the mapping process to handle complex scenarios (e.g., splitting a string back into two fields during `ToEntity`).

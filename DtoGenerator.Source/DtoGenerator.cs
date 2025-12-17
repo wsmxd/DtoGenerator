@@ -87,13 +87,17 @@ public class DtoGenerator : IIncrementalGenerator
             if (nameAttr != null)
                 targetName = nameAttr.ConstructorArguments[0].Value?.ToString() ?? prop.Name;
 
+            // Check setter accessibility
+            bool hasPublicSetter = prop.SetMethod?.DeclaredAccessibility == Accessibility.Public;
+
             properties.Add(new DtoPropertyInfo(
                 OriginalName: prop.Name,
                 TargetName: targetName,
                 TypeFullName: prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 IsRequired: prop.IsRequired,
                 IsVirtual: false,
-                ValueExpression: null
+                ValueExpression: null,
+                HasPublicSetter: hasPublicSetter
             ));
         }
 
@@ -132,7 +136,8 @@ public class DtoGenerator : IIncrementalGenerator
                 TypeFullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 IsRequired: false,
                 IsVirtual: true,
-                ValueExpression: expression
+                ValueExpression: expression,
+                HasPublicSetter: false  // Virtual properties are computed and cannot be set on entities
             ));
         }
 
@@ -252,12 +257,15 @@ public class DtoGenerator : IIncrementalGenerator
         sb.AppendLine("            {");
         foreach (var p in info.Properties)
         {
-            if (p.IsVirtual) continue;
+            // Skip properties that cannot be set via object initializer:
+            // - Virtual properties (computed, no source property)
+            // - Properties without public setters (private/protected set)
+            if (p.IsVirtual || !p.HasPublicSetter) continue;
             sb.AppendLine($"                {p.OriginalName} = this.{p.TargetName},");
         }
         sb.AppendLine("            };" );
 
-        // 调用钩子
+        // Call hook
         sb.AppendLine("            this.OnEntityCreated(entity);");
 
         sb.AppendLine("            return entity;");
@@ -358,6 +366,7 @@ public class DtoGenerator : IIncrementalGenerator
         string TypeFullName,
         bool IsRequired,
         bool IsVirtual,
-        string? ValueExpression
+        string? ValueExpression,
+        bool HasPublicSetter
     );
 }

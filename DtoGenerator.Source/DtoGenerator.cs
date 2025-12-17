@@ -87,13 +87,17 @@ public class DtoGenerator : IIncrementalGenerator
             if (nameAttr != null)
                 targetName = nameAttr.ConstructorArguments[0].Value?.ToString() ?? prop.Name;
 
+            // 检查 setter 的可访问性
+            bool hasPublicSetter = prop.SetMethod?.DeclaredAccessibility == Accessibility.Public;
+
             properties.Add(new DtoPropertyInfo(
                 OriginalName: prop.Name,
                 TargetName: targetName,
                 TypeFullName: prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 IsRequired: prop.IsRequired,
                 IsVirtual: false,
-                ValueExpression: null
+                ValueExpression: null,
+                HasPublicSetter: hasPublicSetter
             ));
         }
 
@@ -132,7 +136,8 @@ public class DtoGenerator : IIncrementalGenerator
                 TypeFullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 IsRequired: false,
                 IsVirtual: true,
-                ValueExpression: expression
+                ValueExpression: expression,
+                HasPublicSetter: false  // Virtual properties don't map back to entity
             ));
         }
 
@@ -252,7 +257,8 @@ public class DtoGenerator : IIncrementalGenerator
         sb.AppendLine("            {");
         foreach (var p in info.Properties)
         {
-            if (p.IsVirtual) continue;
+            // Skip virtual properties and properties without public setters
+            if (p.IsVirtual || !p.HasPublicSetter) continue;
             sb.AppendLine($"                {p.OriginalName} = this.{p.TargetName},");
         }
         sb.AppendLine("            };" );
@@ -358,6 +364,7 @@ public class DtoGenerator : IIncrementalGenerator
         string TypeFullName,
         bool IsRequired,
         bool IsVirtual,
-        string? ValueExpression
+        string? ValueExpression,
+        bool HasPublicSetter
     );
 }
